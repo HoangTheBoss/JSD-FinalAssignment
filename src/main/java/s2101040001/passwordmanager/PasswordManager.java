@@ -1,25 +1,48 @@
 package s2101040001.passwordmanager;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Pattern;
+import java.awt.BorderLayout;
+import java.awt.Desktop;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.datatransfer.StringSelection;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
-import java.util.*;
-import java.util.regex.Pattern;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 public class PasswordManager extends JFrame {
     private JTextField txtWebsite, txtUsername, txtPassword;
@@ -443,33 +466,33 @@ public class PasswordManager extends JFrame {
         return new SecretKeySpec(Arrays.copyOf(key, 16), "AES");
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            boolean isNew = !Files.exists(Paths.get("passwords.enc")); // Check if the file exists
-            int attempts = 0;
-            final int MAX_RETRIES = 3;
+public static void main(String[] args) {
+    SwingUtilities.invokeLater(() -> {
+        boolean isNew = !Files.exists(Paths.get("passwords.enc")); // Check if the file exists
+        int attempts = 0;
+        final int MAX_RETRIES = 3;
 
-            while (attempts < MAX_RETRIES) {  // Retry loop with a maximum number of tries
-                String masterPassword = promptMasterPassword(isNew);
+        while (attempts < MAX_RETRIES) {  // Retry loop with a maximum number of tries
+            String masterPassword = promptMasterPassword(isNew);
 
-                if (masterPassword != null) {
-                    try {
-                        new PasswordManager(masterPassword).setVisible(true);
-                        break;  // Exit the loop if the master password is correct
-                    } catch (RuntimeException e) {
-                        attempts++;
-                        JOptionPane.showMessageDialog(null, "Incorrect master password. Attempts remaining: " + (MAX_RETRIES - attempts));
-                    }
-                } else {
-                    System.exit(0); // Exit if user cancels the prompt
+            if (masterPassword != null) {
+                try {
+                    new PasswordManager(masterPassword).setVisible(true);
+                    break;  // Exit the loop if the master password is correct
+                } catch (RuntimeException e) {
+                    attempts++;
+                    JOptionPane.showMessageDialog(null, "Incorrect master password. Attempts remaining: " + (MAX_RETRIES - attempts));
                 }
+            } else {
+                System.exit(0); // Exit if user cancels the prompt
             }
-            if (attempts >= MAX_RETRIES) {
-                JOptionPane.showMessageDialog(null, "Too many incorrect attempts. Exiting.");
-                System.exit(0);  // Exit after max retries
-            }
-        });
-    }
+        }
+        if (attempts >= MAX_RETRIES) {
+            JOptionPane.showMessageDialog(null, "Too many incorrect attempts. Exiting.");
+            System.exit(0);  // Exit after max retries
+        }
+    });
+}
 
     // Prompt dialog for master password
     private static String promptMasterPassword(boolean isNew) {
@@ -486,61 +509,5 @@ public class PasswordManager extends JFrame {
             System.exit(0); // Exit if user cancels the prompt
             return null;
         }
-    }
-}
-
-class PasswordEntry {
-    private final String website;
-    private String username;
-    private String password;
-
-    public PasswordEntry(String website, String username, String password) {
-        this.website = website;
-        this.username = username;
-        this.password = password;
-    }
-
-    public String getWebsite() {
-        return website;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-}
-
-class PasswordEntryRenderer extends DefaultListCellRenderer {
-    private final Map<String, PasswordEntry> passwordMap;
-
-    public PasswordEntryRenderer(Map<String, PasswordEntry> passwordMap) {
-        this.passwordMap = passwordMap;
-    }
-
-    @Override
-    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-
-        String website = (String) value;
-        PasswordEntry entry = passwordMap.get(website);
-
-        if (entry != null) {
-            setText(entry.getWebsite() + " (" + entry.getUsername() + ")");
-        } else {
-            setText(website); // Fallback just in case
-        }
-
-        return this;
     }
 }
